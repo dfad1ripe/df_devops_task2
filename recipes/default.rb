@@ -107,3 +107,17 @@ end
 # One of options: single json bag for both, this would work in this
 # particular case.
 #
+
+#
+# Now, some games with schema in cookbook_file
+#
+cookbook_file '/home/vagrant/devops' do
+  action :create
+  source 'devops.erb'
+end
+
+execute 'create_db_from_file' do
+  root_pwd = node['root_pwd']
+  command "mysql -p#{root_pwd} < /home/vagrant/devops"
+  not_if "mysql -p#{root_pwd} -e \"show databases\" | grep devops"
+end
