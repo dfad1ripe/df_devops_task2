@@ -1,0 +1,7 @@
+name             'Task2b'
+maintainer       'YOUR_NAME'
+maintainer_email 'YOUR_EMAIL'
+license          'All rights reserved'
+description      'Installs/Configures Task2b'
+long_description 'Installs/Configures Task2b'
+version          '0.1.0'
