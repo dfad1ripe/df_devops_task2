@@ -16,4 +16,4 @@ A: Property of an operation to show the same result when applied multiple
 times.
 
 Q: What's Chef resources you're used in your cookbook.
-A: package, service, template, execute
+A: package, service, execute, cookbook_file, file

@@ -11,12 +11,10 @@
 # Install MySQL and start the service
 #
 
-package 'mysql' do
-  action :install
-end
-
-package 'mysql-server' do
-  action :install
+%w(mysql mysql-server expect).each do |pkg|
+  package pkg do
+    action :install
+  end
 end
 
 service 'mysqld' do
@@ -30,23 +28,21 @@ end
 # because the task is to keep that password in a data_bag.
 #
 
-template '/home/vagrant/secure_install' do
+cookbook_file '/home/vagrant/secure_install' do
   source 'secure_install.erb'
-  mode '0600'
-end
-
-execute 'secure_install' do
-  command 'cat /home/vagrant/secure_install |' \
-  ' /usr/bin/mysql_secure_installation'
+  mode '0711'
   only_if 'mysql -e "show databases" | grep test'
 end
 
-# Here I should delete the file, but this violates the subtask
-# "Try to achieve state when your consequent chef-client runs results
-# in 0 resources updates".
-# file '/home/vagrant/secure_install' do
-#  action :delete
-# end
+execute 'secure_install' do
+  command '/home/vagrant/secure_install'
+  only_if 'mysql -e "show databases" | grep test'
+end
+
+file '/home/vagrant/secure_install' do
+  action :delete
+  only_if { File.exist?('/home/vagrant/secure_install') }
+end
 
 #
 # Setup the root password
@@ -112,12 +108,19 @@ end
 # Now, some games with schema in cookbook_file
 #
 cookbook_file '/home/vagrant/devops' do
+  root_pwd = node['root_pwd']
   action :create
   source 'devops.erb'
+  not_if "mysql -p#{root_pwd} -e \"show databases\" | grep devops"
 end
 
 execute 'create_db_from_file' do
   root_pwd = node['root_pwd']
   command "mysql -p#{root_pwd} < /home/vagrant/devops"
   not_if "mysql -p#{root_pwd} -e \"show databases\" | grep devops"
+end
+
+file '/home/vagrant/devops' do
+  action :delete
+  only_if { File.exist?('/home/vagrant/devops') }
 end
