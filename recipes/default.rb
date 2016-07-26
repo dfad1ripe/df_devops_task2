@@ -58,7 +58,7 @@ db_admins.each do |dba|
   admin_id = db_admin['id']
   next if admin_id != 'root'
   root_pwd = db_admin['password']
-  node.set['root_pwd'] = root_pwd
+  node.default['root_pwd'] = root_pwd
   execute 'set_root_password' do
     command "mysqladmin -u root password #{root_pwd}"
     only_if 'mysql -e "select 1"'
@@ -77,7 +77,7 @@ db_users.each do |dbu|
   db_username = db_user['username']
   db_full_username = "'#{db_username}'@'localhost'"
   mysql_arg = "create user #{db_full_username} identified by '#{db_username}'"
-  execute 'mysql_useradd' do
+  execute "mysql_useradd #{db_username}" do
     command "mysql -p#{root_pwd} -e \"#{mysql_arg}\""
     not_if "mysql -p#{root_pwd} -e \"select user from mysql.user\" |\
     grep #{db_username}"
@@ -94,7 +94,7 @@ db_dbs.each do |dbi|
   db = data_bag_item('db_dbs', dbi)
   db_name = db['dbname']
   mysql_arg = "create database #{db_name}"
-  execute 'mysql_dbadd' do
+  execute "mysql_dbadd #{db_name}" do
     command "mysql -p#{root_pwd} -e \"#{mysql_arg}\""
     not_if "mysql -p#{root_pwd} -e \"show databases\" | grep #{db_name}"
   end
