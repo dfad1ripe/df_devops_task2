@@ -28,20 +28,21 @@ end
 # because the task is to keep that password in a data_bag.
 #
 
-cookbook_file '/home/vagrant/secure_install' do
-  source 'secure_install.erb'
+sec_inst_script = "#{Chef::Config['file_cache_path']}/secure_install.sh"
+cookbook_file sec_inst_script do
+  source 'secure_install.sh'
   mode '0711'
   only_if 'mysql -e "show databases" | grep test'
 end
 
 execute 'secure_install' do
-  command '/home/vagrant/secure_install'
+  command sec_inst_script
   only_if 'mysql -e "show databases" | grep test'
 end
 
-file '/home/vagrant/secure_install' do
+file sec_inst_script do
   action :delete
-  only_if { File.exist?('/home/vagrant/secure_install') }
+  only_if { File.exist?(sec_inst_script) }
 end
 
 #
@@ -107,20 +108,23 @@ end
 #
 # Now, some games with schema in cookbook_file
 #
-cookbook_file '/home/vagrant/devops' do
+
+devops_sql = "#{Chef::Config['file_cache_path']}/devops.sql"
+
+cookbook_file devops_sql do
   root_pwd = node['root_pwd']
   action :create
-  source 'devops.erb'
+  source 'devops.sql'
   not_if "mysql -p#{root_pwd} -e \"show databases\" | grep devops"
 end
 
 execute 'create_db_from_file' do
   root_pwd = node['root_pwd']
-  command "mysql -p#{root_pwd} < /home/vagrant/devops"
+  command "mysql -p#{root_pwd} < #{devops_sql}"
   not_if "mysql -p#{root_pwd} -e \"show databases\" | grep devops"
 end
 
-file '/home/vagrant/devops' do
+file devops_sql do
   action :delete
-  only_if { File.exist?('/home/vagrant/devops') }
+  only_if { File.exist?(devops_sql) }
 end
